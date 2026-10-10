@@ -10,8 +10,13 @@ public sealed class WindowsBluetoothInventory
         var notes = new List<string>(); bool detected = false; bool? radio = null; int classicCount = 0, bleCount = 0;
         try {
             var adapter = await BluetoothAdapter.GetDefaultAsync().AsTask(cancellationToken);
-            if (adapter is not null) { detected = true; radio = adapter.IsCentralRoleSupported || adapter.IsPeripheralRoleSupported; notes.Add($"Adapter address: {adapter.BluetoothAddress:X12}"); }
-            else notes.Add("Windows did not return a default Bluetooth adapter; hardware or driver may be unavailable.");
+            if (adapter is not null) {
+                detected = true;
+                // Windows' role-support flags do not report the radio's on/off state.
+                radio = null;
+                notes.Add($"Adapter address: {adapter.BluetoothAddress:X12}");
+                notes.Add("Radio power state is not inferred from role-support flags.");
+            } else notes.Add("Windows did not return a default Bluetooth adapter; hardware or driver may be unavailable.");
         } catch (Exception ex) { notes.Add($"Adapter query failed: {ex.GetType().Name}: {ex.Message}"); }
         try { classicCount = (await DeviceInformation.FindAllAsync(BluetoothDevice.GetDeviceSelectorFromPairingState(true)).AsTask(cancellationToken)).Count; }
         catch (Exception ex) { notes.Add($"Classic device query failed: {ex.GetType().Name}: {ex.Message}"); }
