@@ -12,7 +12,8 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
-      - run: dotnet test tests/BluetoothDoctor.Core.Tests/BluetoothDoctor.Core.Tests.csproj --configuration Release
+      - name: Run portable core tests
+        run: dotnet test tests/BluetoothDoctor.Core.Tests/BluetoothDoctor.Core.Tests.csproj --configuration Release
   windows-build:
     runs-on: windows-latest
     steps:
@@ -20,5 +21,15 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
-      - run: dotnet build BluetoothDoctorPro.sln --configuration Release
-      - run: dotnet test tests/BluetoothDoctor.Core.Tests/BluetoothDoctor.Core.Tests.csproj --configuration Release
+      - name: Build Windows desktop app
+        run: dotnet build BluetoothDoctorPro.sln --configuration Release
+      - name: Run core tests on Windows
+        run: dotnet test tests/BluetoothDoctor.Core.Tests/BluetoothDoctor.Core.Tests.csproj --configuration Release
+      - name: Publish portable Windows x64 folder
+        run: dotnet publish src/BluetoothDoctor.Windows/BluetoothDoctor.Windows.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=false -o publish
+      - name: Upload Windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: BluetoothDoctorPro-win-x64
+          path: publish/
+          if-no-files-found: error
